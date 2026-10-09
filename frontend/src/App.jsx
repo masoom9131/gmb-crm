@@ -1,47 +1,57 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "./api/api"; // aapka api wala file
 
-const api = axios.create({
-  baseURL: "http://localhost:5000/api"
-});
-
-function App() {
+export default function App() {
   const [email, setEmail] = useState("admin@gmb.com");
   const [password, setPassword] = useState("123456");
 
   const handleRegister = async () => {
     try {
-      console.log("Trying register:", email);
-      const res = await api.post("/auth/register", { name: "Admin", email, password });
-      console.log(res.data);
-      alert("Register Success! Ab Login dabao");
-    } catch (err) {
-      console.log("FULL ERROR:", err);
-      console.log("Response:", err.response);
-      alert("Register Fail: " + (err.response?.data?.message || err.response?.data?.msg || err.message || JSON.stringify(err.response?.data)));
+      await api.post("/auth/register", { email, password });
+      alert("Register ho gaya! Ab Login karo");
+    } catch (e) {
+      alert(e.response?.data?.msg || "Error");
     }
   };
 
   const handleLogin = async () => {
     try {
-      const res = await api.post("/auth/login", { email, password });
-      localStorage.setItem("token", res.data.token);
-      alert("Login SUCCESS! ✅ Connected");
-    } catch (err) {
-      console.log("FULL ERROR:", err);
-      alert("Login Fail: " + (err.response?.data?.message || err.response?.data?.msg || err.message));
+      await api.post("/auth/login", { email, password });
+      alert("Login Success!");
+      window.location.href = "/dashboard"; // ya aapka jo bhi route hai
+    } catch (e) {
+      alert(e.response?.data?.msg || "Login Error");
     }
   };
 
   return (
-    <div style={{ padding: 50, fontFamily: 'Arial' }}>
-      <h2>GMB CRM Login Test</h2>
-      <input style={{padding:10, width:250, border:'1px solid black'}} value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" /><br/><br/>
-      <input style={{padding:10, width:250, border:'1px solid black'}} value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" type="password" /><br/><br/>
-      <button style={{padding:10, marginRight:10}} onClick={handleRegister}>1. Register</button>
-      <button style={{padding:10}} onClick={handleLogin}>2. Login</button>
-      <p style={{marginTop:20, fontSize:12, color:'gray'}}>F12 dabake Console dekho error ke liye</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
+        
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold">G</div>
+          <h1 className="text-3xl font-extrabold text-gray-900">GMB CRM</h1>
+          <p className="text-gray-500 mt-2 font-medium">Franchise AD Assist & Multi-Outlet CRM</p>
+        </div>
+
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
+            <input value={email} onChange={e=>setEmail(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none font-medium" />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Password</label>
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none font-medium" />
+          </div>
+
+          <div className="flex gap-4 pt-2">
+            <button onClick={handleRegister} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-bold hover:shadow-lg hover:scale-[1.02] transition-all">1. Register</button>
+            <button onClick={handleLogin} className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-black hover:shadow-lg hover:scale-[1.02] transition-all">2. Login</button>
+          </div>
+        </div>
+
+        <p className="text-center text-xs text-gray-400 mt-8 font-medium">Secure Login • Franchise Owner & Vendor Dashboard</p>
+      </div>
     </div>
-  )
+  );
 }
-export default App;
