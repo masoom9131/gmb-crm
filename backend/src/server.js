@@ -1,21 +1,32 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/health', (req,res)=> res.json({status:'ok'}));
+// Routes - agar tumhare routes require wale hain to unko bhi import karna hoga
+// Example: import authRoutes from './routes/auth.js';
 
-const PORT = process.env.PORT || 5000;
+app.get('/', (req, res) => {
+  res.send('GMB CRM Backend Running');
+});
 
-mongoose.connect(process.env.MONGODB_URI)
-.then(()=>{
-  console.log('MongoDB Connected');
-  app.listen(PORT, '0.0.0.0', ()=>{
-    console.log(`Server running on port ${PORT}`);
+const PORT = process.env.PORT || 10000;
+const MONGODB_URI = process.env.MONGODB_URI;
+
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log('MongoDB Connected');
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Mongo Connection Error:', err);
   });
-})
-.catch(err=> console.log('Mongo Error', err));
