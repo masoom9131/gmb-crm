@@ -1,0 +1,22 @@
+name: Render Backend Keep-Alive Cron
+
+on:
+  schedule:
+    # Runs every 10 minutes (Render free tier spins down after 15 mins)
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  ping-render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Health Check Route
+        run: |
+          echo "Sending keep-alive ping to Render backend..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "https://gmb-crm.onrender.com/api/health")
+          echo "Response code: $response"
+          if [ "$response" -eq 200 ]; then
+            echo "Render backend is alive and healthy!"
+          else
+            echo "Render backend ping returned code: $response"
+          fi
