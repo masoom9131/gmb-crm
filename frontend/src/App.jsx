@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import api from "./api/axios.js";
-import GbpConnect from "./GbpConnect.jsx";
+import Navbar from "./components/Navbar.jsx";
+import UniversalPostModal from "./components/UniversalPostModal.jsx";
+import BrandsDashboard from "./pages/BrandsDashboard.jsx";
+import BrandDetail from "./pages/BrandDetail.jsx";
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem("token"));
@@ -14,6 +17,12 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [serverStatus, setServerStatus] = useState("checking"); // 'online' | 'waking' | 'checking'
+
+  // Dashboard navigation states
+  const [currentView, setCurrentView] = useState("brands"); // 'brands' | 'brand-detail'
+  const [selectedBrand, setSelectedBrand] = useState(null);
+  const [isUniversalPostOpen, setIsUniversalPostOpen] = useState(false);
+  const [brandsList, setBrandsList] = useState([]);
 
   // Pre-warm backend on page load to eliminate/reduce cold start delay
   useEffect(() => {
@@ -64,6 +73,17 @@ export default function App() {
     return () => clearInterval(interval);
   }, [loading]);
 
+  // Fetch brands list for universal posting modal
+  useEffect(() => {
+    if (token) {
+      api.get("/brands")
+        .then((res) => {
+          if (res.data) setBrandsList(res.data);
+        })
+        .catch(() => {});
+    }
+  }, [token]);
+
   const extractError = (err) => {
     if (err.response?.data?.message) return err.response.data.message;
     if (err.response?.data?.msg) return err.response.data.msg;
@@ -112,15 +132,64 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
+    setCurrentView("brands");
+    setSelectedBrand(null);
     setSuccessMessage("");
     setErrorMessage("");
   };
 
-  // If user is authenticated, show Dashboard
+  // If user is authenticated, render the Multi-Brand GMB CRM Hub
   if (token) {
-    return <GbpConnect onLogout={handleLogout} />;
+    return (
+      <div className="min-h-screen bg-[#F8FAFF] flex flex-col font-sans">
+        <Navbar
+          onLogout={handleLogout}
+          onOpenUniversalPost={() => setIsUniversalPostOpen(true)}
+          selectedBrand={selectedBrand}
+          onBackToBrands={() => {
+            setCurrentView("brands");
+            setSelectedBrand(null);
+          }}
+        />
+
+        <main className="flex-1 pb-16">
+          {currentView === "brands" ? (
+            <BrandsDashboard
+              onSelectBrand={(brand) => {
+                setSelectedBrand(brand);
+                setCurrentView("brand-detail");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onOpenUniversalPost={() => setIsUniversalPostOpen(true)}
+            />
+          ) : (
+            <BrandDetail
+              brand={selectedBrand}
+              onBack={() => {
+                setCurrentView("brands");
+                setSelectedBrand(null);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onOpenUniversalPost={() => setIsUniversalPostOpen(true)}
+            />
+          )}
+        </main>
+
+        {/* Blueprint Universal GMB Posting Modal */}
+        <UniversalPostModal
+          isOpen={isUniversalPostOpen}
+          onClose={() => setIsUniversalPostOpen(false)}
+          brands={brandsList}
+          activeBrandId={selectedBrand?._id}
+          onPostSuccess={() => {
+            // refresh data if needed
+          }}
+        />
+      </div>
+    );
   }
 
+  // Otherwise, render Login / Register Screen
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F8FAFF] p-4">
       <div className="w-full max-w-[420px] bg-white rounded-[32px] shadow-2xl p-8 border border-gray-100 relative overflow-hidden">
